@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         Claude.ai Русификация
-// @namespace    https://github.com/nekit-bes
+// @namespace    https://github.com/naitside
 // @version      1.1.1
 // @description  Полная русификация интерфейса Claude.ai
 // @author       Nikita (@naitside)
 // @match        https://claude.ai/*
 // @grant        none
 // @icon         https://claude.ai/favicon.ico
-// @updateURL    https://raw.githubusercontent.com/nekit-bes/claude-russian/main/claude-russian.user.js
-// @downloadURL  https://raw.githubusercontent.com/nekit-bes/claude-russian/main/claude-russian.user.js
+// @updateURL    https://raw.githubusercontent.com/naitside/claude-russian/main/claude-russian.user.js
+// @downloadURL  https://raw.githubusercontent.com/naitside/claude-russian/main/claude-russian.user.js
 // ==/UserScript==
 
 (function() {
