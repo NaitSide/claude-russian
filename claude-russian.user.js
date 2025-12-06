@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Claude.ai Русификация
 // @namespace    https://github.com/nekit-bes
-// @version      1.1.0
+// @version      1.1.1
 // @description  Полная русификация интерфейса Claude.ai
 // @author       Nikita (@naitside)
 // @match        https://claude.ai/*
@@ -43,6 +43,10 @@
         'What best describes your work?': 'Что лучше всего описывает вашу работу?',
         'Select your work function': 'Выберите вашу сферу деятельности',
         'What personal preferences should Claude consider in responses?': 'Какие личные предпочтения Claude должен учитывать в ответах?',
+        'Your preferences will apply to all conversations, within Anthropic\'s guidelines.': 'Ваши предпочтения будут применяться ко всем беседам в рамках рекомендаций Anthropic.',
+        "Your preferences will apply to all conversations, within Anthropic's guidelines.": 'Ваши предпочтения будут применяться ко всем беседам в рамках рекомендаций Anthropic.',
+        'personal preferences': 'личные предпочтения',
+        "Anthropic's guidelines": 'рекомендаций Anthropic',
         
         // Настройки - Notifications
         'Notifications': 'Уведомления',
@@ -110,12 +114,31 @@
             element.textContent = translations[text];
         }
     }
+    
+    // Функция для перевода текста с сохранением HTML
+    function translateHTML(element) {
+        if (!element) return;
+        
+        const html = element.innerHTML;
+        for (const [eng, rus] of Object.entries(translations)) {
+            if (html.includes(eng)) {
+                element.innerHTML = html.replace(new RegExp(eng, 'g'), rus);
+            }
+        }
+    }
 
     // Функция для перевода всей страницы
     function translatePage() {
         // Переводим все текстовые элементы
         document.querySelectorAll('button, a, span, div, p, h1, h2, h3, h4, label').forEach(el => {
             translateElement(el);
+        });
+        
+        // Переводим элементы с HTML разметкой
+        document.querySelectorAll('p, div, span').forEach(el => {
+            if (el.children.length > 0 && el.textContent.includes('preferences')) {
+                translateHTML(el);
+            }
         });
         
         // Переводим placeholder в input полях
@@ -155,5 +178,5 @@
         subtree: true
     });
 
-    console.log('Claude.ai Русификация активирована! 🇷🇺 v1.1.0');
+    console.log('Claude.ai Русификация активирована! 🇷🇺 v1.1.1');
 })();
