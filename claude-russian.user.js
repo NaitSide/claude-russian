@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Claude.ai Русификация
 // @namespace    https://github.com/nekit-bes
-// @version      1.0.0
+// @version      1.1.0
 // @description  Полная русификация интерфейса Claude.ai
 // @author       Nikita (@naitside)
 // @match        https://claude.ai/*
@@ -24,12 +24,38 @@
         'Learn more': 'Узнать больше',
         'Log out': 'Выйти',
         
-        // Настройки
+        // Настройки - вкладки
+        'General': 'Общие',
         'Account': 'Аккаунт',
         'Appearance': 'Внешний вид',
         'Privacy': 'Конфиденциальность',
         'Capabilities': 'Возможности',
         'Beta features': 'Бета-функции',
+        'Billing': 'Оплата',
+        'Usage': 'Использование',
+        'Connectors': 'Подключения',
+        'Claude Code': 'Claude Code',
+        
+        // Настройки - Profile
+        'Profile': 'Профиль',
+        'Full name': 'Полное имя',
+        'What should Claude call you?': 'Как Claude должен к вам обращаться?',
+        'What best describes your work?': 'Что лучше всего описывает вашу работу?',
+        'Select your work function': 'Выберите вашу сферу деятельности',
+        'What personal preferences should Claude consider in responses?': 'Какие личные предпочтения Claude должен учитывать в ответах?',
+        
+        // Настройки - Notifications
+        'Notifications': 'Уведомления',
+        'Response completions': 'Завершение ответов',
+        'Get notified when Claude has finished a response. Most useful for long-running tasks like tool calls, Research, and Claude Code on the web.': 'Получать уведомление, когда Claude завершит ответ. Наиболее полезно для долгих задач, таких как вызовы инструментов, Research и Claude Code в веб-версии.',
+        'Emails from Claude Code on the web': 'Письма от Claude Code в веб-версии',
+        'Get an email when Claude Code on the web has finished building or needs your response.': 'Получать письмо, когда Claude Code в веб-версии завершит сборку или потребует вашего ответа.',
+        
+        // Настройки - Appearance
+        'Color mode': 'Цветовая тема',
+        'Light': 'Светлая',
+        'Dark': 'Тёмная',
+        'System': 'Системная',
         
         // Чат
         'New chat': 'Новый чат',
@@ -50,6 +76,7 @@
         'Edit': 'Редактировать',
         'Delete': 'Удалить',
         'Regenerate': 'Пересоздать',
+        'Retry': 'Повторить',
         
         // Проекты
         'Projects': 'Проекты',
@@ -68,7 +95,10 @@
         'Continue': 'Продолжить',
         'Back': 'Назад',
         'Next': 'Далее',
-        'Done': 'Готово'
+        'Done': 'Готово',
+        'Loading...': 'Загрузка...',
+        'Error': 'Ошибка',
+        'Success': 'Успешно'
     };
 
     // Функция замены текста
@@ -84,7 +114,7 @@
     // Функция для перевода всей страницы
     function translatePage() {
         // Переводим все текстовые элементы
-        document.querySelectorAll('button, a, span, div, p, h1, h2, h3, label').forEach(el => {
+        document.querySelectorAll('button, a, span, div, p, h1, h2, h3, h4, label').forEach(el => {
             translateElement(el);
         });
         
@@ -125,5 +155,5 @@
         subtree: true
     });
 
-    console.log('Claude.ai Русификация активирована! 🇷🇺');
+    console.log('Claude.ai Русификация активирована! 🇷🇺 v1.1.0');
 })();
