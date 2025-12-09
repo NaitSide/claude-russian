@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Claude.ai Русификация
 // @namespace    https://github.com/naitside
-// @version      1.2.0
+// @version      1.2.1
 // @description  Полная русификация интерфейса Claude.ai
 // @author       Nikita (@naitside)
 // @match        https://claude.ai/*
@@ -273,35 +273,51 @@
         }
     }
 
-    // Функция для перевода всей страницы
-    function translatePage() {
-        // Переводим все текстовые элементы
-        document.querySelectorAll('button, a, span, div, p, h1, h2, h3, h4, h5, h6, label, li').forEach(el => {
+    // Функция для перевода конкретного элемента и его потомков
+    function translateNode(rootNode) {
+        if (!rootNode) return;
+
+        // Переводим текстовые элементы
+        const elements = rootNode.querySelectorAll ?
+            rootNode.querySelectorAll('button, a, span, div, p, h1, h2, h3, h4, h5, h6, label, li') :
+            [];
+
+        elements.forEach(el => {
             translateElement(el);
         });
 
         // Переводим элементы с HTML разметкой
-        document.querySelectorAll('p, div, span, li').forEach(el => {
+        const htmlElements = rootNode.querySelectorAll ?
+            rootNode.querySelectorAll('p, div, span, li') :
+            [];
+
+        htmlElements.forEach(el => {
             if (el.children.length > 0) {
                 translateHTML(el);
             }
         });
 
         // Переводим текстовые узлы напрямую
-        const walker = document.createTreeWalker(
-            document.body,
-            NodeFilter.SHOW_TEXT,
-            null,
-            false
-        );
+        if (rootNode.nodeType === 1) { // Element node
+            const walker = document.createTreeWalker(
+                rootNode,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
 
-        let node;
-        while (node = walker.nextNode()) {
-            translateTextNode(node);
+            let node;
+            while (node = walker.nextNode()) {
+                translateTextNode(node);
+            }
         }
 
         // Переводим placeholder в input полях
-        document.querySelectorAll('input, textarea').forEach(input => {
+        const inputs = rootNode.querySelectorAll ?
+            rootNode.querySelectorAll('input, textarea') :
+            [];
+
+        inputs.forEach(input => {
             const placeholder = input.getAttribute('placeholder');
             if (placeholder && translations[placeholder]) {
                 input.setAttribute('placeholder', translations[placeholder]);
@@ -309,7 +325,11 @@
         });
 
         // Переводим title атрибуты
-        document.querySelectorAll('[title]').forEach(el => {
+        const titledElements = rootNode.querySelectorAll ?
+            rootNode.querySelectorAll('[title]') :
+            [];
+
+        titledElements.forEach(el => {
             const title = el.getAttribute('title');
             if (title && translations[title]) {
                 el.setAttribute('title', translations[title]);
@@ -317,7 +337,11 @@
         });
 
         // Переводим aria-label атрибуты
-        document.querySelectorAll('[aria-label]').forEach(el => {
+        const ariaElements = rootNode.querySelectorAll ?
+            rootNode.querySelectorAll('[aria-label]') :
+            [];
+
+        ariaElements.forEach(el => {
             const ariaLabel = el.getAttribute('aria-label');
             if (ariaLabel && translations[ariaLabel]) {
                 el.setAttribute('aria-label', translations[ariaLabel]);
@@ -325,18 +349,49 @@
         });
     }
 
+    // Функция для перевода всей страницы
+    function translatePage() {
+        translateNode(document.body);
+    }
+
     // Запускаем перевод при загрузке
-    translatePage();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', translatePage);
+    } else {
+        translatePage();
+    }
+
+    // Debounce для предотвращения частых вызовов
+    let translationTimeout = null;
+    let isTranslating = false;
 
     // Следим за изменениями на странице (для динамического контента)
     const observer = new MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-            mutation.addedNodes.forEach(node => {
-                if (node.nodeType === 1) { // Element node
-                    translatePage();
-                }
+        // Предотвращаем рекурсивные вызовы
+        if (isTranslating) return;
+
+        // Отменяем предыдущий таймер
+        if (translationTimeout) {
+            clearTimeout(translationTimeout);
+        }
+
+        // Устанавливаем новый таймер с задержкой
+        translationTimeout = setTimeout(() => {
+            isTranslating = true;
+
+            // Переводим только добавленные узлы
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType === 1) { // Element node
+                        translateNode(node);
+                    } else if (node.nodeType === 3) { // Text node
+                        translateTextNode(node);
+                    }
+                });
             });
-        });
+
+            isTranslating = false;
+        }, 100); // Задержка 100мс
     });
 
     // Начинаем наблюдение
@@ -345,5 +400,5 @@
         subtree: true
     });
 
-    console.log('Claude.ai Русификация активирована! 🇷🇺 v1.2.0');
+    console.log('Claude.ai Русификация активирована! 🇷🇺 v1.2.1');
 })();
