@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Claude.ai Русификация
 // @namespace    https://github.com/naitside
-// @version      1.2.0
+// @version      1.2.1
 // @description  Полная русификация интерфейса Claude.ai
 // @author       Nikita (@naitside)
 // @match        https://claude.ai/*
@@ -220,22 +220,36 @@
         'All': 'Все',
         'None': 'Нет',
         'Default': 'По умолчанию',
-        'Custom': 'Пользовательский'
+        'Custom': 'Пользовательский',
+
+        // Страницы ошибок
+        'Claude will return soon': 'Claude скоро вернётся',
+        'Claude is currently experiencing a temporary service disruption.': 'В данный момент Claude испытывает временные технические проблемы.',
+        "We're working on it, please check back soon.": 'Мы работаем над этим, пожалуйста, зайдите позже.',
+        'Reaching out to support? Mention this error code:': 'Обращаетесь в поддержку? Укажите этот код ошибки:'
     };
+
+    // Атрибут для отметки переведенных элементов
+    const TRANSLATED_ATTR = 'data-ru-translated';
+
+    // WeakSet для отслеживания переведенных текстовых узлов
+    const translatedNodes = new WeakSet();
 
     // Функция замены текста
     function translateElement(element) {
-        if (!element || element.children.length > 0) return;
+        if (!element || element.getAttribute(TRANSLATED_ATTR)) return;
+        if (element.children.length > 0) return;
 
         const text = element.textContent.trim();
         if (translations[text]) {
             element.textContent = translations[text];
+            element.setAttribute(TRANSLATED_ATTR, 'true');
         }
     }
 
     // Функция для перевода текста с сохранением HTML
     function translateHTML(element) {
-        if (!element) return;
+        if (!element || element.getAttribute(TRANSLATED_ATTR)) return;
 
         let html = element.innerHTML;
         let translated = false;
@@ -250,12 +264,13 @@
 
         if (translated) {
             element.innerHTML = html;
+            element.setAttribute(TRANSLATED_ATTR, 'true');
         }
     }
 
     // Функция для перевода частичных совпадений в текстовых узлах
     function translateTextNode(node) {
-        if (!node || node.nodeType !== 3) return;
+        if (!node || node.nodeType !== 3 || translatedNodes.has(node)) return;
 
         let text = node.textContent;
         let translated = false;
@@ -270,6 +285,7 @@
 
         if (translated) {
             node.textContent = text;
+            translatedNodes.add(node);
         }
     }
 
@@ -325,18 +341,93 @@
         });
     }
 
+    // Функция для перевода конкретного элемента и его потомков
+    function translateNode(node) {
+        if (!node) return;
+
+        // Если это элемент
+        if (node.nodeType === 1) {
+            // Переводим текстовые элементы без детей
+            translateElement(node);
+
+            // Переводим элементы с HTML разметкой
+            if (node.children.length > 0) {
+                translateHTML(node);
+            }
+
+            // Переводим placeholder в input полях
+            if ((node.tagName === 'INPUT' || node.tagName === 'TEXTAREA') && node.hasAttribute('placeholder')) {
+                const placeholder = node.getAttribute('placeholder');
+                if (placeholder && translations[placeholder] && !node.getAttribute(TRANSLATED_ATTR + '-placeholder')) {
+                    node.setAttribute('placeholder', translations[placeholder]);
+                    node.setAttribute(TRANSLATED_ATTR + '-placeholder', 'true');
+                }
+            }
+
+            // Переводим title атрибуты
+            if (node.hasAttribute('title')) {
+                const title = node.getAttribute('title');
+                if (title && translations[title] && !node.getAttribute(TRANSLATED_ATTR + '-title')) {
+                    node.setAttribute('title', translations[title]);
+                    node.setAttribute(TRANSLATED_ATTR + '-title', 'true');
+                }
+            }
+
+            // Переводим aria-label атрибуты
+            if (node.hasAttribute('aria-label')) {
+                const ariaLabel = node.getAttribute('aria-label');
+                if (ariaLabel && translations[ariaLabel] && !node.getAttribute(TRANSLATED_ATTR + '-aria')) {
+                    node.setAttribute('aria-label', translations[ariaLabel]);
+                    node.setAttribute(TRANSLATED_ATTR + '-aria', 'true');
+                }
+            }
+
+            // Рекурсивно переводим все дочерние элементы
+            node.querySelectorAll('button, a, span, div, p, h1, h2, h3, h4, h5, h6, label, li, input, textarea, [title], [aria-label]').forEach(el => {
+                translateNode(el);
+            });
+
+            // Переводим текстовые узлы
+            const walker = document.createTreeWalker(
+                node,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+
+            let textNode;
+            while (textNode = walker.nextNode()) {
+                translateTextNode(textNode);
+            }
+        }
+        // Если это текстовый узел
+        else if (node.nodeType === 3) {
+            translateTextNode(node);
+        }
+    }
+
     // Запускаем перевод при загрузке
     translatePage();
 
+    // Debounce функция для предотвращения частых вызовов
+    let debounceTimer = null;
+    const debounceDelay = 100; // миллисекунды
+
     // Следим за изменениями на странице (для динамического контента)
     const observer = new MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-            mutation.addedNodes.forEach(node => {
-                if (node.nodeType === 1) { // Element node
-                    translatePage();
-                }
+        // Очищаем предыдущий таймер
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+        }
+
+        // Устанавливаем новый таймер
+        debounceTimer = setTimeout(() => {
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    translateNode(node);
+                });
             });
-        });
+        }, debounceDelay);
     });
 
     // Начинаем наблюдение
@@ -345,5 +436,5 @@
         subtree: true
     });
 
-    console.log('Claude.ai Русификация активирована! 🇷🇺 v1.2.0');
+    console.log('Claude.ai Русификация активирована! 🇷🇺 v1.2.1');
 })();
